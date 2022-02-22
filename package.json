@@ -1,5 +1,5 @@
 {
-  "name": "mongoose-api",
+  "name": "tron-api",
   "version": "1.0.0",
   "description": "es una api para interactuar con mongose",
   "main": "index.js",
