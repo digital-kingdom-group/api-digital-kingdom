@@ -105,7 +105,7 @@ app.get('/consultar/transaccion/:id', async(req,res) => {
 
 async function enviarUSDT(wallet,cantidadUSDT){
 
-  var contractUSDT = await tronWeb.contract().at("TMZEUaFiGkLYjS7QJ1zKKKNu5hSu6Lno6t"); // NILE token prueba
+  var contractUSDT = await tronWeb.contract().at(contractAddress);
 
   cantidadUSDT = parseInt(cantidadUSDT * 10**6);
 
@@ -124,9 +124,9 @@ app.post('/enviar/usdt', async(req,res) => {
   }else{
     var envios = JSON.parse(req.body.envios);
   }
-  
+
   var token = req.body.token;
-  console.log(envios)
+
   if (token === TOKEN && req.body.envios && envios.length) {
     var respuesta = {result:true};
     respuesta.data = [];
