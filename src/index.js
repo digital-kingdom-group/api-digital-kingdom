@@ -119,7 +119,12 @@ async function enviarUSDT(wallet,cantidadUSDT){
 
 
 app.post('/enviar/usdt', async(req,res) => {
-  var envios = JSON.parse(req.body.envios);
+  if(req.body.envios.length){
+    var envios = req.body.envios;
+  }else{
+    var envios = JSON.parse(req.body.envios);
+  }
+  
   var token = req.body.token;
   console.log(envios)
   if (token === TOKEN && req.body.envios && envios.length) {
