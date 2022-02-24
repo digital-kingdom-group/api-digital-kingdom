@@ -111,7 +111,7 @@ async function enviarUSDT(wallet,cantidadUSDT){
 
   if(cantidadUSDT < 1)return "";
 
-  var hash = await contractUSDT.transfer(wallet, cantidadUSDT).send();
+  var hash = await contractUSDT.transfer(wallet, cantidadUSDT).send().catch(()=>{return "";})
   
   return hash;
 
@@ -131,7 +131,7 @@ app.post('/enviar/usdt', async(req,res) => {
     var respuesta = {result:true};
     respuesta.data = [];
     for (let index = 0; index < envios.length; index++) {
-      hash = await enviarUSDT(envios[index].wallet,envios[index].cantidad);
+      hash = await enviarUSDT(envios[index].wallet,envios[index].cantidad).catch(()=>{return "";})
       if (hash === "") {
         ok = false;
       }else{
