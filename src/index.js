@@ -8,11 +8,8 @@ const BigNumber = require('bignumber.js');
 require('dotenv').config();
 var cors = require('cors');
 
-const app = express();
-
-app.use(cors());
-
 const port = process.env.PORT || "3003";
+const uri = process.env.APP_URI;
 const TOKEN = process.env.APP_MT;
 const PryKey = process.env.APP_PRYKEY;
 const TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
@@ -28,9 +25,40 @@ var tronWeb = new TronWeb(
 );
 
 //tronWeb.setAddress('TEf72oNbP7AxDHgmb2iFrxE2t1NJaLjTv5');
+const app = express();
 
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+const options = { useNewUrlParser: true, useUnifiedTopology: true };
+
+mongoose.connect(uri, options)
+.then(async() => { console.log("Conectado Exitodamente!");})
+.catch(err => { console.log(err); });
+
+const walletsTemp = mongoose.model('wallets', {
+
+  wallet: String,
+  data: Object, 
+  ultimoUso: Number,
+  usuario: String,
+  disponible: Boolean
+
+
+});
+  
+tronWeb.createAccount()
+.then(async(acc)=>{
+  var newWallet = new walletsTemp({
+    wallet: acc.address.base58,
+    data: acc,
+    ultimoUso: Date.now(),
+    usuario: "",
+    disponible: true
+  });
+  await newWallet.save();
+  console.log(acc);
+})
 
 
 app.get('/', async(req,res) => {
@@ -90,7 +118,8 @@ app.get('/consultar/transaccion/:id', async(req,res) => {
           result: true,
           value: value,
           from: tronWeb.address.fromHex(evento.result.from),
-          to: tronWeb.address.fromHex(evento.result.to)
+          to: tronWeb.address.fromHex(evento.result.to),
+          time: Date.now()
         });
       }else {
         res.send({
@@ -125,9 +154,7 @@ app.post('/enviar/usdt', async(req,res) => {
     var envios = JSON.parse(req.body.envios);
   }
 
-  var token = req.body.token;
-
-  if (token === TOKEN && req.body.envios && envios.length) {
+  if (req.body.token === TOKEN && req.body.envios && envios.length) {
     var respuesta = {result:true};
     respuesta.data = [];
     for (let index = 0; index < envios.length; index++) {
@@ -138,7 +165,7 @@ app.post('/enviar/usdt', async(req,res) => {
         ok = true;
       }
       
-      respuesta.data.push({ok:ok ,wallet: envios[index].wallet, cantidad: envios[index].cantidad, hash: hash})
+      respuesta.data.push({ok:ok ,wallet: envios[index].wallet, cantidad: envios[index].cantidad, hash: hash, time: Date.now()})
     }
 
 
@@ -147,6 +174,42 @@ app.post('/enviar/usdt', async(req,res) => {
   }else{
     res.send({result:false})
   }
+
+});
+
+app.get('/consultar/deposito/:id', async(req,res) => {
+
+  let id = req.params.id;
+
+  var evento = await tronWeb.getEventByTransactionID(id)
+  evento = evento[0];
+
+  console.log(evento)
+
+  var value = await tronWeb.trx.getTransaction(id)
+
+    //console.log(value)
+  //  console.log(value.ret[0].contractRet);
+
+    if (value.ret[0].contractRet === 'SUCCESS' && evento.name === 'Transfer' ) {
+
+      value = new BigNumber(evento.result.value);
+      value = value.shiftedBy(-6).toNumber();
+
+      res.send({
+        result: true,
+        value: value,
+        from: tronWeb.address.fromHex(evento.result.from),
+        to: tronWeb.address.fromHex(evento.result.to),
+        time: Date.now()
+      });
+    }else {
+      res.send({
+        result: false,
+        value: 0
+      });
+    }
+  
 
 });
 
