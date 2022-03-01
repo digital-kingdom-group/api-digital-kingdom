@@ -46,7 +46,8 @@ const walletsTemp = mongoose.model('wallets', {
 
 
 });
-  
+ 
+/*
 tronWeb.createAccount()
 .then(async(acc)=>{
   var newWallet = new walletsTemp({
@@ -59,7 +60,7 @@ tronWeb.createAccount()
   await newWallet.save();
   console.log(acc);
 })
-
+*/
 
 app.get('/', async(req,res) => {
 
@@ -177,7 +178,30 @@ app.post('/enviar/usdt', async(req,res) => {
 
 });
 
-app.get('/consultar/deposito/:id', async(req,res) => {
+app.post('/crear/deposito/', async(req,res) => {
+
+    if (req.body.token === TOKEN && req.body.id) {
+
+      let userid = req.body.id;
+
+      res.send({
+        result: true,
+        sendTo: "wallet destino",
+        ordenId: 10001,
+        time: Date.now(),
+        end: Date.now()+(3600*1000)
+      });
+    }else {
+      res.send({
+        result: false,
+        time: Date.now()
+      });
+    }
+  
+
+});
+
+app.post('/consultar/deposito/:id', async(req,res) => {
 
   let id = req.params.id;
 
