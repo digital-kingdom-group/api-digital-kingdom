@@ -89,7 +89,6 @@ async function buscarWalletsDisponibles(){
 
 buscarWalletsDisponibles();
 
-
 app.get('/', async(req,res) => {
 
  res.send("ok")
@@ -125,6 +124,9 @@ app.get('/precio/usd/trx', async(req,res) => {
 });
 
 app.get('/consultar/transaccion/:id', async(req,res) => {
+
+  await buscarWalletsDisponibles();
+
 
     let id = req.params.id;
 
@@ -177,6 +179,8 @@ async function enviarUSDT(wallet,cantidadUSDT){
 
 
 app.post('/enviar/usdt', async(req,res) => {
+  await buscarWalletsDisponibles();
+
   if(req.body.envios.length){
     var envios = req.body.envios;
   }else{
@@ -208,51 +212,80 @@ app.post('/enviar/usdt', async(req,res) => {
 
 app.post('/crear/deposito/', async(req,res) => {
 
+  await buscarWalletsDisponibles();
+
     if (req.body.token === TOKEN && req.body.id) {
 
       var walletDeposito = await walletsTemp.find({disponible: true}).sort({ultimoUso: -1})
-      var totalTranfers = await transferencias.find({usuario: req.body.id}).sort({identificador: -1})
+      var totalTranfers = await transferencias.find({}).sort({identificador: -1});
+      var miTransfers = await transferencias.find({usuario: req.body.id}).sort({identificador: -1});
 
-      if(walletDeposito.length === 0){
-        walletDeposito[0] = await crearWallet();
+      var neworden = false;
+      for (let index = 0; index < miTransfers.length; index++) {
+
+        if(miTransfers[index].disponible){
+          neworden = true;
+          break;
+        }
+        
       }
 
-      await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
+      //crear nueva orden de deposito?
+      if(neworden){
 
-      if(totalTranfers.length === 0){
-        var identificador = 0;
+        if(walletDeposito.length === 0){
+          walletDeposito[0] = await crearWallet();
+        }
 
+        await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
+
+        if(totalTranfers.length === 0){
+          var identificador = 0;
+
+        }else{
+          var identificador = totalTranfers[totalTranfers.length-1].identificador+1;
+
+        }
+
+        var newtransfer = new transferencias({
+
+          identificador: identificador,
+          tipo: "deposito",
+          moneda: "usdt(trc20)",
+          cantidad: 0,
+          from: "",
+          to: walletDeposito[0].wallet, 
+          time: Date.now(),
+          usuario: req.body.id,
+          timeCompletado: 0,
+          completado: false,
+          pendiente: false,
+          cancelado: false
+        
+        });
+
+        await newtransfer.save();
+
+        res.send({
+          result: true,
+          sendTo: walletDeposito[0].wallet,
+          ordenId: identificador,
+          time: Date.now(),
+          end: Date.now()+(3600*1000)
+        });
       }else{
-        var identificador = totalTranfers[totalTranfers.length-1].identificador+1;
+
+        res.send({
+          result: true,
+          sendTo: miTransfers[index].to,
+          ordenId: miTransfers[index].identificador,
+          time: miTransfers[index].time,
+          end: miTransfers[index].time+(3600*1000)
+        });
+
+        
 
       }
-
-      var newtransfer = new transferencias({
-
-        identificador: identificador,
-        tipo: "deposito",
-        moneda: "usdt(trc20)",
-        cantidad: 0,
-        from: "",
-        to: walletDeposito[0].wallet, 
-        time: Date.now(),
-        usuario: req.body.id,
-        timeCompletado: 0,
-        completado: false,
-        pendiente: false,
-        cancelado: false
-      
-      });
-
-      await newtransfer.save();
-
-      res.send({
-        result: true,
-        sendTo: walletDeposito[0].wallet,
-        ordenId: identificador,
-        time: Date.now(),
-        end: Date.now()+(3600*1000)
-      });
 
     }else {
       res.send({
@@ -265,6 +298,8 @@ app.post('/crear/deposito/', async(req,res) => {
 });
 
 app.post('/consultar/deposito/id/:id', async(req,res) => {
+
+
 
   let id = req.params.id;
 
@@ -284,6 +319,10 @@ app.post('/consultar/deposito/id/:id', async(req,res) => {
         time: Date.now()
       });
     }
+
+
+  await buscarWalletsDisponibles();
+
   
 
 });
