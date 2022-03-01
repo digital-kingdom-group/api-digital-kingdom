@@ -221,10 +221,12 @@ app.post('/crear/deposito/', async(req,res) => {
       var miTransfers = await transferencias.find({usuario: req.body.id}).sort({identificador: -1});
 
       var neworden = false;
+      var ident = null;
       for (let index = 0; index < miTransfers.length; index++) {
 
         if(miTransfers[index].disponible){
           neworden = true;
+          ident = index;
           break;
         }
         
@@ -277,10 +279,10 @@ app.post('/crear/deposito/', async(req,res) => {
 
         res.send({
           result: true,
-          sendTo: miTransfers[index].to,
-          ordenId: miTransfers[index].identificador,
-          time: miTransfers[index].time,
-          end: miTransfers[index].time+(3600*1000)
+          sendTo: miTransfers[ident].to,
+          ordenId: miTransfers[ident].identificador,
+          time: miTransfers[ident].time,
+          end: miTransfers[ident].time+(3600*1000)
         });
 
         
