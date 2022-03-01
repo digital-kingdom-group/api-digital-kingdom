@@ -219,7 +219,13 @@ app.post('/crear/deposito/', async(req,res) => {
 
       await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
 
-      var identificador = totalTranfers[totalTranfers.length-1].identificador+1;
+      if(totalTranfers.length === 0){
+        var identificador = 0;
+
+      }else{
+        var identificador = totalTranfers[totalTranfers.length-1].identificador+1;
+
+      }
 
       var newtransfer = new transferencias({
 
