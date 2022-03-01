@@ -222,14 +222,16 @@ app.post('/crear/deposito/', async(req,res) => {
 
       var neworden = false;
       var ident = null;
-      for (let index = 0; index < miTransfers.length; index++) {
+      if(miTransfers > 0){
+        for (let index = 0; index < miTransfers.length; index++) {
 
-        if(miTransfers[index].disponible){
-          neworden = true;
-          ident = index;
-          break;
+          if(miTransfers[index].disponible){
+            neworden = true;
+            ident = index;
+            break;
+          }
+          
         }
-        
       }
 
       //crear nueva orden de deposito?
