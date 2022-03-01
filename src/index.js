@@ -44,6 +44,22 @@ const walletsTemp = mongoose.model('wallets', {
   usuario: String,
   disponible: Boolean
 
+});
+
+const transferencias = mongoose.model('transfer', {
+
+  identificador: Number,
+  tipo: String,
+  moneda: String,
+  cantidad: Number,
+  from: String,
+  to: String, 
+  time: Number,
+  usuario: String,
+  timeCompletado: Number,
+  completado: Boolean,
+  pendiente: Boolean,
+  cancelado: Boolean
 
 });
 
@@ -64,6 +80,14 @@ async function crearWallet(){
   return acc;
 
 }
+
+async function buscarWalletsDisponibles(){
+
+  await walletsTemp.updateMany({disponible: false, ultimoUso: {$gte:Date.now()+(3600*1000)}},{disponible: true,ultimoUso: Date.now(), usuario: "" })
+
+}
+
+buscarWalletsDisponibles();
 
 
 app.get('/', async(req,res) => {
@@ -187,22 +211,43 @@ app.post('/crear/deposito/', async(req,res) => {
     if (req.body.token === TOKEN && req.body.id) {
 
       var walletDeposito = await walletsTemp.find({disponible: true}).sort({ultimoUso: -1})
+      var totalTranfers = await transferencias.find({usuario: req.body.id}).sort({identificador: -1})
 
       if(walletDeposito.length === 0){
         walletDeposito[0] = await crearWallet();
       }
 
-      await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false})
+      await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
 
-      let userid = req.body.id;
+      var identificador = totalTranfers[totalTranfers.length-1].identificador+1;
+
+      var newtransfer = new transferencias({
+
+        identificador: identificador,
+        tipo: "deposito",
+        moneda: "usdt(trc20)",
+        cantidad: 0,
+        from: "",
+        to: walletDeposito[0].wallet, 
+        time: Date.now(),
+        usuario: req.body.id,
+        timeCompletado: 0,
+        completado: false,
+        pendiente: false,
+        cancelado: false
+      
+      });
+
+      await newtransfer.save();
 
       res.send({
         result: true,
         sendTo: walletDeposito[0].wallet,
-        ordenId: 10001,
+        ordenId: identificador,
         time: Date.now(),
         end: Date.now()+(3600*1000)
       });
+
     }else {
       res.send({
         result: false,
@@ -213,36 +258,24 @@ app.post('/crear/deposito/', async(req,res) => {
 
 });
 
-app.post('/consultar/deposito/:id', async(req,res) => {
+app.post('/consultar/deposito/id/:id', async(req,res) => {
 
   let id = req.params.id;
 
-  var evento = await tronWeb.getEventByTransactionID(id)
-  evento = evento[0];
+  var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
 
-  console.log(evento)
-
-  var value = await tronWeb.trx.getTransaction(id)
-
-    //console.log(value)
-  //  console.log(value.ret[0].contractRet);
-
-    if (value.ret[0].contractRet === 'SUCCESS' && evento.name === 'Transfer' ) {
-
-      value = new BigNumber(evento.result.value);
-      value = value.shiftedBy(-6).toNumber();
+    if (totalTranfers > 0) {
 
       res.send({
         result: true,
-        value: value,
-        from: tronWeb.address.fromHex(evento.result.from),
-        to: tronWeb.address.fromHex(evento.result.to),
+        idDeposito: id,
+        data: totalTranfers[0],
         time: Date.now()
       });
     }else {
       res.send({
         result: false,
-        value: 0
+        time: Date.now()
       });
     }
   
