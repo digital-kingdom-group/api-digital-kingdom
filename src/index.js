@@ -330,10 +330,11 @@ app.post('/crear/deposito/', async(req,res) => {
       if(miTransfers.length > 0){
         for (let index = 0; index < miTransfers.length; index++) {
 
-          if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado){
+          if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado ){
             neworden = false;
             ident = index;
-            console.log(index)
+            await walletsTemp.updateOne({wallet: miTransfers[index].to},{disponible: false, usuario: usuario})
+
             break;
           }
           
@@ -350,10 +351,7 @@ app.post('/crear/deposito/', async(req,res) => {
         await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
 
         var totalTranfers = await transferencias.find({}).sort({identificador: -1});
-
-
         var identificador = totalTranfers.length;
-
 
         var newtransfer = new transferencias({
 
@@ -378,8 +376,8 @@ app.post('/crear/deposito/', async(req,res) => {
           result: true,
           sendTo: walletDeposito[0].wallet,
           ordenId: identificador,
-          time: Date.now(),
-          end: Date.now()+tiempoWallets
+          time: newtransfer.time,
+          end: newtransfer.time+tiempoWallets
         });
       }else{
 
@@ -390,8 +388,6 @@ app.post('/crear/deposito/', async(req,res) => {
           time: miTransfers[ident].time,
           end: miTransfers[ident].time+tiempoWallets
         });
-
-        
 
       }
 
