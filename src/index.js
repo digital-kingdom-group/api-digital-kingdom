@@ -407,28 +407,33 @@ app.post('/crear/deposito/', async(req,res) => {
 
 app.post('/consultar/deposito/id/:id', async(req,res) => {
 
+  let id = req.body.id;
 
+  if (req.body.token !== TOKEN && !req.body.id) {
+    res.send({
+      result: false,
+      time: Date.now()
+    });
+  }else{
+    
+    var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
 
-  let id = req.params.id;
+      if (totalTranfers.length > 0) {
 
-  var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
+        res.send({
+          result: true,
+          idDeposito: id,
+          data: totalTranfers[0],
+          time: Date.now()
+        });
+      }else {
+        res.send({
+          result: false,
+          time: Date.now()
+        });
+      }
 
-    if (totalTranfers.length > 0) {
-
-      res.send({
-        result: true,
-        idDeposito: id,
-        data: totalTranfers[0],
-        time: Date.now()
-      });
-    }else {
-      res.send({
-        result: false,
-        time: Date.now()
-      });
-    }
-
-
+  }
   await buscarWalletsDisponibles();
 
   
@@ -439,25 +444,32 @@ app.post('/consultar/deposito/id/:id', async(req,res) => {
 
 app.post('/consultar/deposito/usuario/:id', async(req,res) => {
 
-  let id = req.params.id;
+  let id = req.body.id;
 
-  var miTransfers = await transferencias.find({usuario: id}).sort({identificador: -1});
+  if (req.body.token !== TOKEN && !req.body.id) {
+    res.send({
+      result: false,
+      time: Date.now()
+    });
+  }else{
 
-    if (miTransfers.length > 0) {
+    var miTransfers = await transferencias.find({usuario: id}).sort({identificador: -1});
 
-      res.send({
-        result: true,
-        usuario: id,
-        data: miTransfers,
-        time: Date.now()
-      });
-    }else {
-      res.send({
-        result: false,
-        time: Date.now()
-      });
-    }
+      if (miTransfers.length > 0) {
 
+        res.send({
+          result: true,
+          usuario: id,
+          data: miTransfers,
+          time: Date.now()
+        });
+      }else {
+        res.send({
+          result: false,
+          time: Date.now()
+        });
+      }
+  }
 
   await buscarWalletsDisponibles();
 
