@@ -413,12 +413,42 @@ app.post('/consultar/deposito/id/:id', async(req,res) => {
 
   var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
 
-    if (totalTranfers > 0) {
+    if (totalTranfers.length > 0) {
 
       res.send({
         result: true,
         idDeposito: id,
         data: totalTranfers[0],
+        time: Date.now()
+      });
+    }else {
+      res.send({
+        result: false,
+        time: Date.now()
+      });
+    }
+
+
+  await buscarWalletsDisponibles();
+
+  
+
+});
+
+
+
+app.post('/consultar/deposito/usuario/:id', async(req,res) => {
+
+  let id = req.params.id;
+
+  var miTransfers = await transferencias.find({usuario: id}).sort({identificador: -1});
+
+    if (miTransfers.length > 0) {
+
+      res.send({
+        result: true,
+        usuario: id,
+        data: miTransfers,
         time: Date.now()
       });
     }else {
