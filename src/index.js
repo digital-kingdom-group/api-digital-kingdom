@@ -316,15 +316,18 @@ app.post('/crear/deposito/', async(req,res) => {
 
   await buscarWalletsDisponibles();
 
+  var usuario = req.body.id;
+
     if (req.body.token === TOKEN && req.body.id) {
 
       var walletDeposito = await walletsTemp.find({disponible: true}).sort({ultimoUso: -1})
-      var totalTranfers = await transferencias.find({}).sort({identificador: -1});
-      var miTransfers = await transferencias.find({usuario: req.body.id}).sort({identificador: -1});
+      var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1});
+
+      console.log(miTransfers)
 
       var neworden = true;
       var ident = NaN;
-      if(miTransfers > 0){
+      if(miTransfers.length > 0){
         for (let index = 0; index < miTransfers.length; index++) {
 
           if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado){
@@ -345,6 +348,8 @@ app.post('/crear/deposito/', async(req,res) => {
         }
 
         await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
+
+        var totalTranfers = await transferencias.find({}).sort({identificador: -1});
 
 
         var identificador = totalTranfers.length;
