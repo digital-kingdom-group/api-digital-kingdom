@@ -296,7 +296,7 @@ app.post('/enviar/usdt', async(req,res) => {
       hash = await enviarUSDT(envios[index].wallet,envios[index].cantidad).catch(()=>{return "";})
       if (hash === "") {
         ok = false;
-      }else{
+      }else{ 
         ok = true;
       }
       
@@ -320,21 +320,22 @@ app.post('/crear/deposito/', async(req,res) => {
 
     if (req.body.token === TOKEN && req.body.id) {
 
-      var walletDeposito = await walletsTemp.find({disponible: true}).sort({ultimoUso: -1})
-      var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1});
+      var miTransfers = [];
 
-      console.log(miTransfers)
+      var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1}).catch(()=>{return []})
 
-      var neworden = true;
-      var ident = NaN;
+      console.log(miTransfers.length)
+      //console.log(miTransfers[0].usuario)
+
+      var neworden = false;
+      var ident = 0;
       if(miTransfers.length > 0){
         for (let index = 0; index < miTransfers.length; index++) {
 
           if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado ){
-            neworden = false;
+            neworden = true;
             ident = index;
-            await walletsTemp.updateOne({wallet: miTransfers[index].to},{disponible: false, usuario: usuario})
-
+            console.log("hay pendiente "+ident)
             break;
           }
           
@@ -342,13 +343,17 @@ app.post('/crear/deposito/', async(req,res) => {
       }
 
       //crear nueva orden de deposito?
-      if(neworden){
+      if(!neworden){
 
+        var walletDeposito = await walletsTemp.find({disponible: true}).sort({ultimoUso: 1})
+        console.log("crea nueva orden: "+walletDeposito[0].wallet)
+        
         if(walletDeposito.length === 0){
           walletDeposito[0] = await crearWallet();
         }
 
-        await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
+        await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},
+          {$set:{disponible: false, usuario: usuario}})
 
         var totalTranfers = await transferencias.find({}).sort({identificador: -1});
         var identificador = totalTranfers.length;
