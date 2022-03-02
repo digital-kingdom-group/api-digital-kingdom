@@ -499,7 +499,7 @@ app.post('/consultar/depositos/usuario/', async(req,res) => {
 
 });
 
-app.post('/cancelar/deposito/id/:id', async(req,res) => {
+app.post('/cancelar/deposito/id/', async(req,res) => {
 
   let id = req.body.id;
 
