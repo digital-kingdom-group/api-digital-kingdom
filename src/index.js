@@ -187,6 +187,29 @@ async function buscarMisTransferencias(user){
 
 }
 
+async function cancelarMiTransferencia(user, id){
+  if(user){
+    user = {usuario: user, identificador: id}
+    var update = await transferencias.updateMany(user,
+      [
+  
+        {$set:{timeCompletado: Date.now()}},
+        {$set:{cancelado: true}},
+        {$set:{pendiente: false}}
+        
+      ]   
+      
+    )
+    console.log(update);
+    return true;
+  }else{
+    return false;
+  }
+
+  
+
+}
+
 buscarMisTransferencias();
 
 buscarWalletsDisponibles();
@@ -441,9 +464,7 @@ app.post('/consultar/deposito/id/:id', async(req,res) => {
 
 });
 
-
-
-app.post('/consultar/deposito/usuario/:id', async(req,res) => {
+app.post('/consultar/depositos/usuario/:id', async(req,res) => {
 
   let id = req.body.id;
 
@@ -454,7 +475,7 @@ app.post('/consultar/deposito/usuario/:id', async(req,res) => {
     });
   }else{
 
-    var miTransfers = await transferencias.find({usuario: id}).sort({identificador: -1});
+    var miTransfers = await transferencias.find({usuario: id, tipo: "deposito"},{_id:0,__v:0}).sort({identificador: -1});
 
       if (miTransfers.length > 0) {
 
@@ -478,5 +499,35 @@ app.post('/consultar/deposito/usuario/:id', async(req,res) => {
 
 });
 
-app.listen(port, ()=> console.log('Escuchando Puerto: ' + port))
+app.post('/cancelar/deposito/id/:id', async(req,res) => {
 
+  let id = req.body.id;
+
+  if (req.body.token !== TOKEN && !req.body.id) {
+
+    res.send({
+      result: false,
+      time: Date.now()
+    });
+  }else{
+
+      if (await cancelarMiTransferencia(id)) {
+
+        res.send({
+          result: true,
+          idDeposito: id,
+          time: Date.now()
+        });
+      }else {
+        res.send({
+          result: false,
+          time: Date.now()
+        });
+      }
+
+  }
+  await buscarWalletsDisponibles();
+
+});
+
+app.listen(port, ()=> console.log('Escuchando Puerto: ' + port))
