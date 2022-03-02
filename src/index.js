@@ -475,7 +475,7 @@ app.post('/consultar/depositos/usuario/:id', async(req,res) => {
     });
   }else{
 
-    var miTransfers = await transferencias.find({usuario: id, tipo: "deposito"},{_id:0,__v:0}).sort({identificador: -1});
+    var miTransfers = await transferencias.find({usuario: id, tipo: "deposito",cantidad:{$gte:0}},{_id:0,__v:0,usuario:0}).sort({identificador: -1});
 
       if (miTransfers.length > 0) {
 
