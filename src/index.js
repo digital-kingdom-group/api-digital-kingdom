@@ -8,6 +8,8 @@ const BigNumber = require('bignumber.js');
 require('dotenv').config();
 var cors = require('cors');
 
+const tiempoWallets = 3600*1000;
+
 const port = process.env.PORT || "3003";
 const uri = process.env.APP_URI;
 const TOKEN = process.env.APP_MT;
@@ -83,9 +85,109 @@ async function crearWallet(){
 
 async function buscarWalletsDisponibles(){
 
-  await walletsTemp.updateMany({disponible: false, ultimoUso: {$gte:Date.now()+(3600*1000)}},{disponible: true,ultimoUso: Date.now(), usuario: "" })
+  var update = await walletsTemp.updateMany(
+    {
+      disponible: false
+    },
+    [
+
+      {$set:{usuario: {$switch: 
+            {branches: [
+              { 
+                case: { $gte: [ Date.now(), {$sum:["$ultimoUso",tiempoWallets]} ] }, 
+                then: ""
+              }],
+              default: "$usuario"
+            } 
+          } 
+        }
+      },
+      {$set:{disponible: {$switch: 
+            {branches: [
+              { 
+                case: { $gte: [ Date.now(), {$sum:["$ultimoUso",tiempoWallets]} ] }, 
+                then: true
+              }],
+              default: "$disponible"
+            } 
+          } 
+        }
+      },
+      {$set:{ultimoUso: {$switch: 
+            {branches: [
+              { 
+                case: { $gte: [ Date.now(), {$sum:["$ultimoUso",tiempoWallets]} ] }, 
+                then: Date.now()
+              }],
+              default: "$ultimoUso"
+            } 
+          } 
+        }
+      }
+      
+
+    ]
+        
+
+    
+    
+  )
+  //console.log(update);
 
 }
+
+async function buscarMisTransferencias(user){
+  if(user){
+    user = {usuario: user}
+  }else{
+    user = {}
+  }
+
+  var update = await transferencias.updateMany(user,
+    [
+
+      {$set:{timeCompletado: {$switch: 
+            {branches: [
+              { 
+                case: { $gte: [ Date.now(), {$sum:["$time",tiempoWallets]} ] }, 
+                then: Date.now()
+              }],
+              default: "$timeCompletado"
+            } 
+          } 
+        }
+      },
+      {$set:{cancelado: {$switch: 
+            {branches: [
+              { 
+                case: { $gte: [ Date.now(), {$sum:["$time",tiempoWallets]} ] }, 
+                then: true
+              }],
+              default: "$cancelado"
+            } 
+          } 
+        }
+      },
+      {$set:{pendiente: {$switch: 
+            {branches: [
+              { 
+                case: { $gte: [ Date.now(), {$sum:["$time",tiempoWallets]} ] }, 
+                then: false
+              }],
+              default: "$pendiente"
+            } 
+          } 
+        }
+      }
+      
+    ]   
+    
+  )
+  console.log(update);
+
+}
+
+buscarMisTransferencias();
 
 buscarWalletsDisponibles();
 
@@ -220,14 +322,15 @@ app.post('/crear/deposito/', async(req,res) => {
       var totalTranfers = await transferencias.find({}).sort({identificador: -1});
       var miTransfers = await transferencias.find({usuario: req.body.id}).sort({identificador: -1});
 
-      var neworden = false;
-      var ident = null;
+      var neworden = true;
+      var ident = NaN;
       if(miTransfers > 0){
         for (let index = 0; index < miTransfers.length; index++) {
 
-          if(miTransfers[index].disponible){
-            neworden = true;
+          if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado){
+            neworden = false;
             ident = index;
+            console.log(index)
             break;
           }
           
@@ -243,13 +346,9 @@ app.post('/crear/deposito/', async(req,res) => {
 
         await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},{disponible: false, usuario: req.body.id})
 
-        if(totalTranfers.length === 0){
-          var identificador = 0;
 
-        }else{
-          var identificador = totalTranfers[totalTranfers.length-1].identificador+1;
+        var identificador = totalTranfers.length;
 
-        }
 
         var newtransfer = new transferencias({
 
@@ -263,7 +362,7 @@ app.post('/crear/deposito/', async(req,res) => {
           usuario: req.body.id,
           timeCompletado: 0,
           completado: false,
-          pendiente: false,
+          pendiente: true,
           cancelado: false
         
         });
@@ -275,7 +374,7 @@ app.post('/crear/deposito/', async(req,res) => {
           sendTo: walletDeposito[0].wallet,
           ordenId: identificador,
           time: Date.now(),
-          end: Date.now()+(3600*1000)
+          end: Date.now()+tiempoWallets
         });
       }else{
 
@@ -284,7 +383,7 @@ app.post('/crear/deposito/', async(req,res) => {
           sendTo: miTransfers[ident].to,
           ordenId: miTransfers[ident].identificador,
           time: miTransfers[ident].time,
-          end: miTransfers[ident].time+(3600*1000)
+          end: miTransfers[ident].time+tiempoWallets
         });
 
         
