@@ -361,6 +361,9 @@ app.post('/crear/deposito/', async(req,res) => {
   await buscarWalletsDisponibles();
 
   var usuario = parseInt(req.body.id);
+  console.log(req.body.id)
+
+  console.log(usuario)
 
   await verificarDeposito(usuario);
 
@@ -505,6 +508,10 @@ async function verificarDeposito(id){
 app.post('/consultar/deposito/id/', async(req,res) => {
 
   let id = parseInt(req.body.id);
+
+  console.log(req.body.id)
+
+  console.log(id)
 
   await verificarDeposito(id);
 
