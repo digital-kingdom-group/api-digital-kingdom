@@ -480,7 +480,7 @@ async function verificarDeposito(id){
       console.log(value)
       if(value > 0){
 
-        await asignarTRX(wallet);
+        await asignarTRX(totalTranfers[index].to);
 
         var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
         estawallet = estawallet[0];
