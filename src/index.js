@@ -187,10 +187,10 @@ async function buscarMisTransferencias(user){
 
 }
 
-async function cancelarMiTransferencia(user, id){
-  if(user){
-    user = {usuario: user, identificador: id}
-    var update = await transferencias.updateMany(user,
+async function cancelarMiTransferencia(id){
+  if(id){
+
+    var update = await transferencias.updateMany({identificador: id},
       [
   
         {$set:{timeCompletado: Date.now()}},
