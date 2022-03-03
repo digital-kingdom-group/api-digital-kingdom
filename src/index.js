@@ -188,9 +188,18 @@ async function buscarMisTransferencias(user){
 }
 
 async function cancelarMiTransferencia(id){
+  buscarMisTransferencias();
   if(id){
 
-    var update = await transferencias.updateMany({identificador: id},
+    var transfer = transferencias.find({identificador: id},{})
+
+    var update = await walletsTemp.updateOne({wallet: transfer[0].wallet},
+      [
+        {$set:{disponible:true, usuario: ""}}
+      ]
+      )
+
+    update = await transferencias.updateOne({identificador: id},
       [
   
         {$set:{timeCompletado: Date.now()}},
