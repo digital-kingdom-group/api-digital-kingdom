@@ -272,7 +272,6 @@ app.get('/consultar/transaccion/:id', async(req,res) => {
 
   await buscarWalletsDisponibles();
 
-
     let id = req.params.id;
 
     var evento = await tronWeb.getEventByTransactionID(id)
@@ -361,13 +360,13 @@ app.post('/crear/deposito/', async(req,res) => {
 
   await buscarWalletsDisponibles();
 
-  var usuario = req.body.id;
+  var usuario = parseInt(req.body.id);
+
+  await verificarDeposito(usuario);
 
     if (req.body.token === TOKEN && req.body.id) {
 
       var miTransfers = [];
-
-      await verificarDeposito(id);
 
       var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1}).catch(()=>{return []})
 
