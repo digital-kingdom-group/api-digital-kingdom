@@ -477,22 +477,27 @@ async function verificarDeposito(id){
         var tempUST = await TEMPtronWeb.contract().at(contractAddress);
         var cantidad = await contractUSDT.balanceOf(totalTranfers[index].to).call()
         cantidad = new BigNumber(cantidad._hex).toString();
-        var hash = await tempUST.transfer(DepositWALLET,cantidad).send()
+        console.log(cantidad)
+        var hash = await tempUST.transfer(DepositWALLET,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
 
         delete TEMPtronWeb;
 
-        await transferencias.updateOne({identificador: id},
-          [
-            {$set:{cantidad: value, from: hash, timeCompletado: Date.now(),completado: true}}
-          ]
-        )
+        if(hash !== ""){
+          await transferencias.updateOne({identificador: id},
+            [
+              {$set:{cantidad: value, from: hash, timeCompletado: Date.now(),completado: true}}
+            ]
+          )
+  
+          await walletsTemp.updateOne({wallet: totalTranfers[index].to},
+            [
+              {$set:{disponible: true, usuario: ""}}
+            ]
+            
+          )
+        }
 
-        await walletsTemp.updateOne({wallet: totalTranfers[index].to},
-          [
-            {$set:{disponible: true, usuario: ""}}
-          ]
-          
-        )
+       
 
       }
       
