@@ -198,7 +198,6 @@ async function cancelarMiTransferencia(id){
   if(id){
 
     var miTransfers = await transferencias.find({identificador: id})
-    console.log(miTransfers)
 
     var update = await walletsTemp.updateOne({wallet: miTransfers[0].to},
       [
@@ -223,8 +222,6 @@ async function cancelarMiTransferencia(id){
   }
 
 }
-
-cancelarMiTransferencia(40)
 
 buscarMisTransferencias();
 
@@ -455,6 +452,22 @@ async function verificarDeposito(id){
       var value = await contractUSDT.balanceOf(totalTranfers[index].to).call()
       value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
       console.log(value)
+      if(value > 0){
+
+        await transferencias.updateOne({identificador: id},
+          [
+            {$set:{cantidad: value, from: "external wallet", timeCompletado: Date.now(),completado: true}}
+          ]
+        )
+
+        await walletsTemp.updateOne({wallet: totalTranfers[index].to},
+          [
+            {$set:{disponible: true, usuario: ""}}
+          ]
+          
+        )
+
+      }
       
     }
     
@@ -462,11 +475,11 @@ async function verificarDeposito(id){
 
 }
 
-verificarDeposito(43)
-
 app.post('/consultar/deposito/id/', async(req,res) => {
 
-  let id = req.body.id;
+  let id = parse(req.body.id);
+
+  await verificarDeposito(id);
 
   if (req.body.token !== TOKEN && !req.body.id) {
     res.send({
