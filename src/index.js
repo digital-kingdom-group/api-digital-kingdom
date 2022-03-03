@@ -16,7 +16,7 @@ const TOKEN = process.env.APP_MT;
 const PryKey = process.env.APP_PRYKEY;
 const TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 const TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
-
+const DepositWALLET =  process.env.APP_DEP_WALLET || "TB7RTxBPY4eMvKjceXj8SWjVnZCrWr4XvF";
 const contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
 var tronWeb = new TronWeb(
@@ -34,8 +34,6 @@ tronWeb.contract().at(contractAddress)
   contractUSDT = result;
   //console.log(contractUSDT)
 })
-
-
 
 //tronWeb.setAddress('TEf72oNbP7AxDHgmb2iFrxE2t1NJaLjTv5');
 const app = express();
@@ -195,28 +193,37 @@ async function buscarMisTransferencias(){
 }
 
 async function cancelarMiTransferencia(id){
-  if(id){
 
-    var miTransfers = await transferencias.find({identificador: id})
+  var miTransfers = await transferencias.find({identificador: id})
 
-    var update = await walletsTemp.updateOne({wallet: miTransfers[0].to},
-      [
-        {$set:{disponible:true, usuario: ""}}
-      ]
-      )
+  if(miTransfers.length > 0 ){
 
-    update = await transferencias.updateOne({identificador: id},
-      [
+    if (!miTransfers[0].completado) {
+
+      var update = await walletsTemp.updateOne({wallet: miTransfers[0].to},
+        [
+          {$set:{disponible:true, usuario: ""}}
+        ]
+        )
   
-        {$set:{timeCompletado: Date.now()}},
-        {$set:{cancelado: true}},
-        {$set:{pendiente: false}}
+      update = await transferencias.updateOne({identificador: id},
+        [
+    
+          {$set:{timeCompletado: Date.now()}},
+          {$set:{cancelado: true}},
+          {$set:{pendiente: false}}
+          
+        ]   
         
-      ]   
+      )
+      console.log(update);
+      return true;
       
-    )
-    console.log(update);
-    return true;
+    }else{
+      false
+    }
+
+    
   }else{
     return false;
   }
@@ -454,9 +461,26 @@ async function verificarDeposito(id){
       console.log(value)
       if(value > 0){
 
+        var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
+        estawallet = estawallet[0];
+
+        var TEMPtronWeb = new TronWeb(
+          TRONGRID_API,
+          TRONGRID_API,
+          TRONGRID_API_EVENT,
+          estawallet.privateKey
+        );
+
+        var tempUST = await TEMPtronWeb.contract().at(contractAddress);
+        var cantidad = await tempUST.balanceOf(totalTranfers[index].to).call()
+        cantidad = new BigNumber(cantidad._hex).toString();
+        var hash = await tempUST.transfer(DepositWALLET,cantidad).send()
+
+        delete TEMPtronWeb;
+
         await transferencias.updateOne({identificador: id},
           [
-            {$set:{cantidad: value, from: "external wallet", timeCompletado: Date.now(),completado: true}}
+            {$set:{cantidad: value, from: hash, timeCompletado: Date.now(),completado: true}}
           ]
         )
 
@@ -558,6 +582,8 @@ app.post('/cancelar/deposito/id/', async(req,res) => {
       time: Date.now()
     });
   }else{
+
+    await verificarDeposito(id);
 
       if (await cancelarMiTransferencia(id)) {
 
