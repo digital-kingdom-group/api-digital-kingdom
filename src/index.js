@@ -476,7 +476,7 @@ async function verificarDeposito(id){
         );
 
         var tempUST = await TEMPtronWeb.contract().at(contractAddress);
-        var cantidad = await tempUST.balanceOf(totalTranfers[index].to).call()
+        var cantidad = await contractUSDT.balanceOf(totalTranfers[index].to).call()
         cantidad = new BigNumber(cantidad._hex).toString();
         var hash = await tempUST.transfer(DepositWALLET,cantidad).send()
 
