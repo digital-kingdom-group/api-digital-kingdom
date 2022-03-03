@@ -136,14 +136,10 @@ async function buscarWalletsDisponibles(){
 
 }
 
-async function buscarMisTransferencias(user){
-  if(user){
-    user = {usuario: user}
-  }else{
-    user = {}
-  }
+async function buscarMisTransferencias(){
 
-  var update = await transferencias.updateMany(user,
+
+  var update = await transferencias.updateMany({completado: false,cancelado: false},
     [
 
       {$set:{timeCompletado: {$switch: 
