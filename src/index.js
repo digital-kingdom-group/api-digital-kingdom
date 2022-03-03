@@ -26,6 +26,17 @@ var tronWeb = new TronWeb(
   PryKey
 );
 
+var contractUSDT;
+
+tronWeb.contract().at(contractAddress)
+.then((result)=>{
+  console.log("contrato conectado ["+contractAddress+"]");
+  contractUSDT = result;
+  //console.log(contractUSDT)
+})
+
+
+
 //tronWeb.setAddress('TEf72oNbP7AxDHgmb2iFrxE2t1NJaLjTv5');
 const app = express();
 
@@ -35,7 +46,7 @@ app.use(bodyParser.json());
 const options = { useNewUrlParser: true, useUnifiedTopology: true };
 
 mongoose.connect(uri, options)
-.then(async() => { console.log("Conectado Exitodamente!");})
+.then(async() => { console.log("Conectado Exitodamente a la base de datos");})
 .catch(err => { console.log(err); });
 
 const walletsTemp = mongoose.model('wallets', {
@@ -179,17 +190,16 @@ async function buscarMisTransferencias(){
     ]   
     
   )
-  console.log(update);
+  //console.log(update);
 
 }
 
 async function cancelarMiTransferencia(id){
-  buscarMisTransferencias();
   if(id){
 
     var transfer = transferencias.find({identificador: id},{})
 
-    var update = await walletsTemp.updateOne({wallet: transfer[0].wallet},
+    var update = await walletsTemp.updateOne({wallet: transfer[0].to},
       [
         {$set:{disponible:true, usuario: ""}}
       ]
@@ -211,6 +221,7 @@ async function cancelarMiTransferencia(id){
     return false;
   }
 
+  buscarMisTransferencias();
   
 
 }
@@ -433,6 +444,17 @@ app.post('/crear/deposito/', async(req,res) => {
   
 
 });
+
+
+async function verificarDeposito(id){
+
+  var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
+
+  if(totalTranfers.length > 0){
+    totalTranfers[0].to
+  }
+
+}
 
 app.post('/consultar/deposito/id/', async(req,res) => {
 
