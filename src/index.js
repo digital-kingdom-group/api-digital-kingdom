@@ -365,6 +365,8 @@ app.post('/crear/deposito/', async(req,res) => {
 
       var miTransfers = [];
 
+      await verificarDeposito(id);
+
       var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1}).catch(()=>{return []})
 
       console.log(miTransfers.length)
@@ -378,7 +380,7 @@ app.post('/crear/deposito/', async(req,res) => {
           if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado ){
             neworden = true;
             ident = index;
-            console.log("hay pendiente "+ident)
+            console.log("orden pendiente "+miTransfers[ident].identificador)
             break;
           }
           
@@ -501,7 +503,7 @@ async function verificarDeposito(id){
 
 app.post('/consultar/deposito/id/', async(req,res) => {
 
-  let id = parse(req.body.id);
+  let id = parseInt(req.body.id);
 
   await verificarDeposito(id);
 
