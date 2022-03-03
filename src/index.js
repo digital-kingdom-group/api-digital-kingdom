@@ -471,7 +471,7 @@ async function verificarDeposito(id){
           TRONGRID_API,
           TRONGRID_API,
           TRONGRID_API_EVENT,
-          estawallet.privateKey
+          estawallet.data.privateKey
         );
 
         var tempUST = await TEMPtronWeb.contract().at(contractAddress);
