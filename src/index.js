@@ -361,13 +361,10 @@ app.post('/crear/deposito/', async(req,res) => {
   await buscarWalletsDisponibles();
 
   var usuario = parseInt(req.body.id);
-  console.log(req.body.id)
 
-  console.log(usuario)
+    if (req.body.token === TOKEN && req.body.id && !isNaN(usuario)) {
 
-  await verificarDeposito(usuario);
-
-    if (req.body.token === TOKEN && req.body.id) {
+      await verificarDeposito(usuario);
 
       var miTransfers = [];
 
@@ -509,18 +506,14 @@ app.post('/consultar/deposito/id/', async(req,res) => {
 
   let id = parseInt(req.body.id);
 
-  console.log(req.body.id)
-
-  console.log(id)
-
-  await verificarDeposito(id);
-
-  if (req.body.token !== TOKEN && !req.body.id) {
+  if (req.body.token !== TOKEN && isNaN(id) && !req.body.id) {
     res.send({
       result: false,
       time: Date.now()
     });
   }else{
+
+    await verificarDeposito(id);
     
     var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
 
