@@ -9,6 +9,7 @@ require('dotenv').config();
 var cors = require('cors');
 
 const tiempoWallets = 3600*1000;
+const minTRX = 10000000;
 
 const port = process.env.PORT || "3003";
 const uri = process.env.APP_URI;
@@ -18,6 +19,8 @@ const TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 const TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
 const DepositWALLET =  process.env.APP_DEP_WALLET || "TB7RTxBPY4eMvKjceXj8SWjVnZCrWr4XvF";
 const contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+
+
 
 var tronWeb = new TronWeb(
   TRONGRID_API,
@@ -88,8 +91,21 @@ async function crearWallet(){
   var newWallet = new walletsTemp(acc);
   await newWallet.save();
 
+  await asignarTRX(acc.address.base58);
+
   return acc;
 
+}
+
+async function asignarTRX(wallet){
+  var balance = await tronWeb.trx.getBalance(wallet);
+  if (balance < minTRX) {
+
+    var hash = await tronWeb.trx.sendTransaction(wallet, minTRX, "asignar trx desde master");
+    console.log(hash)
+    
+  }
+  
 }
 
 async function buscarWalletsDisponibles(){
@@ -463,6 +479,8 @@ async function verificarDeposito(id){
       value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
       console.log(value)
       if(value > 0){
+
+        await asignarTRX(wallet);
 
         var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
         estawallet = estawallet[0];
