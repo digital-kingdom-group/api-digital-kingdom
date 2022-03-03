@@ -197,9 +197,10 @@ async function buscarMisTransferencias(){
 async function cancelarMiTransferencia(id){
   if(id){
 
-    var transfer = transferencias.find({identificador: id},{})
+    var miTransfers = await transferencias.find({identificador: id})
+    console.log(miTransfers)
 
-    var update = await walletsTemp.updateOne({wallet: transfer[0].to},
+    var update = await walletsTemp.updateOne({wallet: miTransfers[0].to},
       [
         {$set:{disponible:true, usuario: ""}}
       ]
@@ -221,10 +222,9 @@ async function cancelarMiTransferencia(id){
     return false;
   }
 
-  buscarMisTransferencias();
-  
-
 }
+
+cancelarMiTransferencia(40)
 
 buscarMisTransferencias();
 
@@ -451,10 +451,18 @@ async function verificarDeposito(id){
   var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
 
   if(totalTranfers.length > 0){
-    totalTranfers[0].to
+    for (let index = 0; index < totalTranfers.length; index++) {
+      var value = await contractUSDT.balanceOf(totalTranfers[index].to).call()
+      value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
+      console.log(value)
+      
+    }
+    
   }
 
 }
+
+verificarDeposito(43)
 
 app.post('/consultar/deposito/id/', async(req,res) => {
 
