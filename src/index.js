@@ -236,7 +236,7 @@ async function cancelarMiTransferencia(id){
       return true;
       
     }else{
-      false
+      return false;
     }
 
     
