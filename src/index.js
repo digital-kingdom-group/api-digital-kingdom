@@ -502,12 +502,14 @@ async function verificarDeposito(id){
       console.log(value)
       if(value > 0){
 
-        if(!await asignarTRX(totalTranfers[index].to)){
+        var asing = await asignarTRX(totalTranfers[index].to);
+
+        if(!asing){
 
           var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
           estawallet = estawallet[0];
 
-          var TEMPtronWeb = await new TronWeb(
+          var TEMPtronWeb = new TronWeb(
             TRONGRID_API,
             TRONGRID_API,
             TRONGRID_API_EVENT,
