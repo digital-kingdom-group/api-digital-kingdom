@@ -389,8 +389,6 @@ app.post('/enviar/usdt', async(req,res) => {
 
 app.post('/crear/deposito/', async(req,res) => {
 
-  console.log("!!!SOLICITAR CREAR DEPOSITO!!!")
-
   await buscarWalletsDisponibles();
 
   var usuario = parseInt(req.body.id);
@@ -401,7 +399,6 @@ app.post('/crear/deposito/', async(req,res) => {
 
       var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1}).catch(()=>{return []})
 
-      console.log(miTransfers.length)
       //console.log(miTransfers[0].usuario)
 
       var neworden = false;
@@ -412,7 +409,7 @@ app.post('/crear/deposito/', async(req,res) => {
           if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado ){
             neworden = true;
             ident = index;
-            await verificarDeposito(miTransfers[index].identificador);
+            await verificarDeposito(miTransfers[ident].identificador);
             console.log("orden pendiente "+miTransfers[ident].identificador)
             break;
           }
@@ -493,6 +490,8 @@ app.post('/crear/deposito/', async(req,res) => {
 
 async function verificarDeposito(id){
 
+  console.log(id)
+
   if(id){
 
     var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
@@ -560,7 +559,7 @@ app.post('/consultar/deposito/id/', async(req,res) => {
 
   let id = parseInt(req.body.id);
 
-  if (req.body.token !== TOKEN || isNaN(id) || !req.body.id) {
+  if (req.body.token !== TOKEN || isNaN(id) ) {
     res.send({
       result: false,
       time: Date.now()
@@ -599,7 +598,7 @@ app.post('/consultar/depositos/usuario/', async(req,res) => {
 
   let id = parseInt(req.body.id);
 
-  if (req.body.token !== TOKEN || !req.body.id || isNaN(id)) {
+  if (req.body.token !== TOKEN || isNaN(id)) {
     res.send({
       result: false,
       time: Date.now()
@@ -634,7 +633,7 @@ app.post('/cancelar/deposito/id/', async(req,res) => {
 
   let id = parseInt(req.body.id);
 
-  if (req.body.token !== TOKEN || !req.body.id || isNaN(id)) {
+  if (req.body.token !== TOKEN || isNaN(id)) {
 
     res.send({
       result: false,
