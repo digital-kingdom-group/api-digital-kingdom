@@ -428,6 +428,9 @@ app.post('/crear/deposito/', async(req,res) => {
 
         console.log("crea nueva orden: "+walletDeposito[0].wallet)
 
+        // se retira el valance disponible antes de asignarla
+        await retirarBalance(walletDeposito[0].wallet)
+
         await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},
           {$set:{disponible: false, usuario: usuario}})
 
@@ -487,10 +490,38 @@ app.post('/crear/deposito/', async(req,res) => {
 
 });
 
+async function retirarBalance(wallet){
+  var estawallet = await walletsTemp.find({wallet: wallet}).catch(()=>{console.log("wallet inexistente");return "";})
+  estawallet = estawallet[0];
+
+  var TEMPtronWeb = new TronWeb(
+    TRONGRID_API,
+    TRONGRID_API,
+    TRONGRID_API_EVENT,
+    estawallet.data.privateKey
+  );
+
+  var tempUST = await TEMPtronWeb.contract().at(contractAddress);
+  var cantidad = await contractUSDT.balanceOf(wallet).call()
+  cantidad = new BigNumber(cantidad._hex).toString();
+  //console.log(cantidad)
+  if(cantidad > 0){
+
+    var hash = await tempUST.transfer(DepositWALLET,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
+
+  }else{
+    hash = "";
+  }
+  
+  delete TEMPtronWeb;
+
+  return hash;
+}
+
 
 async function verificarDeposito(id){
 
-  console.log(id)
+  console.log("consultar id: "+id)
 
   if(id){
 
@@ -500,30 +531,14 @@ async function verificarDeposito(id){
     for (let index = 0; index < totalTranfers.length; index++) {
       var value = await contractUSDT.balanceOf(totalTranfers[index].to).call()
       value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
-      console.log(value)
+      //console.log(value)
       if(value > 0){
 
         var asing = await asignarTRX(totalTranfers[index].to);
 
         if(!asing){
 
-          var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
-          estawallet = estawallet[0];
-
-          var TEMPtronWeb = new TronWeb(
-            TRONGRID_API,
-            TRONGRID_API,
-            TRONGRID_API_EVENT,
-            estawallet.data.privateKey
-          );
-
-          var tempUST = await TEMPtronWeb.contract().at(contractAddress);
-          var cantidad = await contractUSDT.balanceOf(totalTranfers[index].to).call()
-          cantidad = new BigNumber(cantidad._hex).toString();
-          console.log(cantidad)
-          var hash = await tempUST.transfer(DepositWALLET,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
-
-          delete TEMPtronWeb;
+          hash = await retirarBalance(totalTranfers[index].to);
 
           if(hash !== ""){
             await transferencias.updateOne({identificador: id},
@@ -550,8 +565,6 @@ async function verificarDeposito(id){
   }
 
   }
-
-  
 
 }
 
