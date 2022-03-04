@@ -507,7 +507,7 @@ async function verificarDeposito(id){
           var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
           estawallet = estawallet[0];
 
-          var TEMPtronWeb = new TronWeb(
+          var TEMPtronWeb = await new TronWeb(
             TRONGRID_API,
             TRONGRID_API,
             TRONGRID_API_EVENT,
