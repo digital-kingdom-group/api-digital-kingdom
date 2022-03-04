@@ -210,7 +210,9 @@ async function buscarMisTransferencias(){
 
 async function cancelarMiTransferencia(id){
 
-  var miTransfers = await transferencias.find({identificador: id})
+  if(id){
+
+    var miTransfers = await transferencias.find({identificador: id})
 
   if(miTransfers.length > 0 ){
 
@@ -243,6 +245,12 @@ async function cancelarMiTransferencia(id){
   }else{
     return false;
   }
+
+  }else{
+    return false;
+  }
+
+  
 
 }
 
@@ -419,7 +427,12 @@ app.post('/crear/deposito/', async(req,res) => {
           {$set:{disponible: false, usuario: usuario}})
 
         var totalTranfers = await transferencias.find({}).sort({identificador: -1});
-        var identificador = totalTranfers.length;
+        if(totalTranfers.length > 0){
+          var identificador = totalTranfers.length;
+        }else{
+          identificador = 0;
+        }
+        
 
         var newtransfer = new transferencias({
 
