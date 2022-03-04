@@ -81,7 +81,7 @@ async function crearWallet(){
   var acc =  await tronWeb.createAccount()
 
   await asignarTRX(acc.address.base58);
-  
+
   acc = {
     wallet: acc.address.base58,
     data: acc,
@@ -105,7 +105,11 @@ async function asignarTRX(wallet){
 
     var hash = await tronWeb.trx.sendTransaction(wallet, minTRX, "asignar trx desde master");
     console.log(hash)
+
+    return true;
     
+  }else{
+    return false;
   }
   
 }
@@ -390,8 +394,6 @@ app.post('/crear/deposito/', async(req,res) => {
 
     if (req.body.token === TOKEN && req.body.id && !isNaN(usuario)) {
 
-      await verificarDeposito(usuario);
-
       var miTransfers = [];
 
       var miTransfers = await transferencias.find({usuario: usuario}).sort({identificador: -1}).catch(()=>{return []})
@@ -407,6 +409,7 @@ app.post('/crear/deposito/', async(req,res) => {
           if(miTransfers[index].pendiente && !miTransfers[index].completado && !miTransfers[index].cancelado ){
             neworden = true;
             ident = index;
+            await verificarDeposito(miTransfers[index].identificador);
             console.log("orden pendiente "+miTransfers[ident].identificador)
             break;
           }
@@ -498,42 +501,43 @@ async function verificarDeposito(id){
       console.log(value)
       if(value > 0){
 
-        await asignarTRX(totalTranfers[index].to);
+        if(!await asignarTRX(totalTranfers[index].to)){
 
-        var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
-        estawallet = estawallet[0];
+          var estawallet = await walletsTemp.find({wallet: totalTranfers[index].to})
+          estawallet = estawallet[0];
 
-        var TEMPtronWeb = new TronWeb(
-          TRONGRID_API,
-          TRONGRID_API,
-          TRONGRID_API_EVENT,
-          estawallet.data.privateKey
-        );
+          var TEMPtronWeb = new TronWeb(
+            TRONGRID_API,
+            TRONGRID_API,
+            TRONGRID_API_EVENT,
+            estawallet.data.privateKey
+          );
 
-        var tempUST = await TEMPtronWeb.contract().at(contractAddress);
-        var cantidad = await contractUSDT.balanceOf(totalTranfers[index].to).call()
-        cantidad = new BigNumber(cantidad._hex).toString();
-        console.log(cantidad)
-        var hash = await tempUST.transfer(DepositWALLET,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
+          var tempUST = await TEMPtronWeb.contract().at(contractAddress);
+          var cantidad = await contractUSDT.balanceOf(totalTranfers[index].to).call()
+          cantidad = new BigNumber(cantidad._hex).toString();
+          console.log(cantidad)
+          var hash = await tempUST.transfer(DepositWALLET,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
 
-        delete TEMPtronWeb;
+          delete TEMPtronWeb;
 
-        if(hash !== ""){
-          await transferencias.updateOne({identificador: id},
-            [
-              {$set:{cantidad: value, from: hash, timeCompletado: Date.now(),completado: true}}
-            ]
-          )
-  
-          await walletsTemp.updateOne({wallet: totalTranfers[index].to},
-            [
-              {$set:{disponible: true, usuario: ""}}
-            ]
-            
-          )
-        }
+          if(hash !== ""){
+            await transferencias.updateOne({identificador: id},
+              [
+                {$set:{cantidad: value, from: hash, timeCompletado: Date.now(),completado: true}}
+              ]
+            )
+    
+            await walletsTemp.updateOne({wallet: totalTranfers[index].to},
+              [
+                {$set:{disponible: true, usuario: ""}}
+              ]
+              
+            )
+          }
 
-       
+
+        }      
 
       }
       
