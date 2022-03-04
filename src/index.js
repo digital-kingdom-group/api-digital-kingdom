@@ -78,25 +78,22 @@ const transferencias = mongoose.model('transfer', {
 });
 
 async function crearWallet(){
-  await tronWeb.createAccount()
-  .then(async(acc)=>{
-    await asignarTRX(acc.address.base58);
+  var acc = await tronWeb.createAccount()
+  await asignarTRX(acc.address.base58);
 
-    acc = {
-      wallet: acc.address.base58,
-      data: acc,
-      ultimoUso: Date.now(),
-      usuario: "",
-      disponible: true
-    };
-  
-    var newWallet = new walletsTemp(acc);
-    await newWallet.save();
-  
-    return acc;
+  acc = {
+    wallet: acc.address.base58,
+    data: acc,
+    ultimoUso: Date.now(),
+    usuario: "",
+    disponible: true
+  };
+
+  var newWallet = new walletsTemp(acc);
+  await newWallet.save();
+
+  return acc;
     
-  })
-  .catch((err)=>{res.send(err);console.log(err)})
 
 }
 
