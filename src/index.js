@@ -80,7 +80,7 @@ const transferencias = mongoose.model('transfer', {
 async function crearWallet(){
   var acc =  await tronWeb.createAccount()
   .then(()=>{
-    await asignarTRX(acc.address.base58);
+    asignarTRX(acc.address.base58);
 
     acc = {
       wallet: acc.address.base58,
@@ -575,17 +575,18 @@ app.post('/consultar/deposito/id/', async(req,res) => {
           data: totalTranfers[0],
           time: Date.now()
         });
+
       }else {
+
         res.send({
           result: false,
           time: Date.now()
         });
+
       }
 
   }
   await buscarWalletsDisponibles();
-
-  
 
 });
 
