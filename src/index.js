@@ -102,18 +102,23 @@ async function crearWallet(){
 
 async function asignarTRX(wallet){
   var balance = await tronWeb.trx.getBalance(wallet);
+
   if (balance < minTRX) {
 
-    var hash = await tronWeb.trx.sendTransaction(wallet, minTRX, "asignar trx desde master");
-    console.log(hash)
+    console.log("asignar TRX")
+    var hash = await tronWeb.trx.sendTransaction(wallet, minTRX);
+    console.log("hash: "+hash.txid)
 
     return true;
     
   }else{
+
     return false;
   }
   
 }
+
+asignarTRX("TE7rWugFTYspciUYv2BWmpTQKLSymuMs4n")
 
 async function buscarWalletsDisponibles(){
 
