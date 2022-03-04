@@ -408,11 +408,12 @@ app.post('/crear/deposito/', async(req,res) => {
       if(!neworden){
 
         var walletDeposito = await walletsTemp.find({disponible: true}).sort({ultimoUso: -1})
-        console.log("crea nueva orden: "+walletDeposito[0].wallet)
         
         if(walletDeposito.length === 0){
           walletDeposito[0] = await crearWallet();
         }
+
+        console.log("crea nueva orden: "+walletDeposito[0].wallet)
 
         await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},
           {$set:{disponible: false, usuario: usuario}})
