@@ -485,7 +485,9 @@ app.post('/crear/deposito/', async(req,res) => {
 
 async function verificarDeposito(id){
 
-  var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
+  if(id){
+
+    var totalTranfers = await transferencias.find({identificador: id}).sort({time: -1})
 
   if(totalTranfers.length > 0){
     for (let index = 0; index < totalTranfers.length; index++) {
@@ -537,13 +539,17 @@ async function verificarDeposito(id){
     
   }
 
+  }
+
+  
+
 }
 
 app.post('/consultar/deposito/id/', async(req,res) => {
 
   let id = parseInt(req.body.id);
 
-  if (req.body.token !== TOKEN && isNaN(id) && !req.body.id) {
+  if (req.body.token !== TOKEN || isNaN(id) || !req.body.id) {
     res.send({
       result: false,
       time: Date.now()
@@ -578,9 +584,9 @@ app.post('/consultar/deposito/id/', async(req,res) => {
 
 app.post('/consultar/depositos/usuario/', async(req,res) => {
 
-  let id = req.body.id;
+  let id = parseInt(req.body.id);
 
-  if (req.body.token !== TOKEN && !req.body.id) {
+  if (req.body.token !== TOKEN || !req.body.id || isNaN(id)) {
     res.send({
       result: false,
       time: Date.now()
@@ -613,9 +619,9 @@ app.post('/consultar/depositos/usuario/', async(req,res) => {
 
 app.post('/cancelar/deposito/id/', async(req,res) => {
 
-  let id = req.body.id;
+  let id = parseInt(req.body.id);
 
-  if (req.body.token !== TOKEN && !req.body.id) {
+  if (req.body.token !== TOKEN || !req.body.id || isNaN(id)) {
 
     res.send({
       result: false,
