@@ -689,9 +689,11 @@ app.post('/cancelar/deposito/id/', async(req,res) => {
 
 app.get('/consultar/masterwallet/', async(req,res)=>{
 
-  const response = await fetch("https://tronpulse.io/api/wallet/"+MasterWallet)
+  const json = await fetch("https://tronpulse.io/api/wallet/"+MasterWallet)
   .catch(error =>{console.error(error)})
-  const json = await response.json();
+  .then((result)=>{
+    return result.json();
+  })
 
   var value = await contractUSDT.balanceOf(MasterWallet).call();
   value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
