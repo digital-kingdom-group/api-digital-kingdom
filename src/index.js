@@ -11,23 +11,36 @@ var cors = require('cors');
 const tiempoWallets = 3600*1000;
 const minTRX = 10000000;
 
+const minDeposit = 10;
+
 const port = process.env.PORT || "3003";
-const uri = process.env.APP_URI;
 const TOKEN = process.env.APP_MT;
-const PryKey = process.env.APP_PRYKEY;
 const TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 const TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
 const contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+
+const Testnet = process.env.APP_TESTNET || "false";
+
+if (Testnet === "true") {
+
+  const TRONGRID_API =  "https://api.nileex.io";
+  const TRONGRID_API_EVENT = "https://event.nileex.io";
+  const contractAddress = "TMZEUaFiGkLYjS7QJ1zKKKNu5hSu6Lno6t";
+  
+}
 
 var tronWeb = new TronWeb(
   TRONGRID_API,
   TRONGRID_API,
   TRONGRID_API_EVENT,
-  PryKey
+  process.env.APP_PRYKEY
 );
 
 const MasterWallet =  tronWeb.defaultAddress.base58;
-console.log("Master Wallet: "+MasterWallet)
+const DepositWallet = process.env.APP_DEPOSITWALLET || MasterWallet;
+
+console.log("Master Wallet: "+MasterWallet);
+console.log("Desposit Wallet: "+DepositWallet)
 
 var contractUSDT;
 
@@ -35,10 +48,9 @@ tronWeb.contract().at(contractAddress)
 .then((result)=>{
   console.log("contrato conectado ["+contractAddress+"]");
   contractUSDT = result;
-  //console.log(contractUSDT)
+  //console.log(contractUSDT);
 })
 
-//tronWeb.setAddress('TEf72oNbP7AxDHgmb2iFrxE2t1NJaLjTv5');
 const app = express();
 
 app.use(cors());
@@ -46,7 +58,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const options = { useNewUrlParser: true, useUnifiedTopology: true };
 
-mongoose.connect(uri, options)
+mongoose.connect(process.env.APP_URI, options)
 .then(async() => { console.log("Conectado Exitodamente a la base de datos");})
 .catch(err => { console.log(err); });
 
@@ -505,9 +517,9 @@ async function retirarBalance(wallet){
   var cantidad = await contractUSDT.balanceOf(wallet).call()
   cantidad = new BigNumber(cantidad._hex).toString();
   //console.log(cantidad)
-  if(cantidad > 0){
+  if(cantidad > minDeposit){
 
-    var hash = await tempUST.transfer(MasterWallet,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
+    var hash = await tempUST.transfer(DepositWallet,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
 
   }else{
     hash = "";
@@ -677,12 +689,19 @@ app.post('/cancelar/deposito/id/', async(req,res) => {
 
 app.get('/consultar/masterwallet/', async(req,res)=>{
 
+  const response = await fetch("https://tronpulse.io/api/wallet/"+MasterWallet)
+  .catch(error =>{console.error(error)})
+  const json = await response.json();
+
   var value = await contractUSDT.balanceOf(MasterWallet).call();
   value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
 
   res.send({
     wallet: MasterWallet,
-    assets: [{usdt: value}]
+    assets: [{usdt: value}],
+    energy: json.data.resource.energy_available,
+    bandwith: json.data.resource.bandwith_available
+
   }); 
 
 });
