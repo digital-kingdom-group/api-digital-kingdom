@@ -680,7 +680,10 @@ app.get('/consultar/masterwallet/', async(req,res)=>{
   var value = await contractUSDT.balanceOf(MasterWallet).call();
   value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
 
-  res.send({usdt: value}); 
+  res.send({
+    wallet: MasterWallet,
+    assets: [{usdt: value}]
+  }); 
 
 });
 
