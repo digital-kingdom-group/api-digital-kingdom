@@ -15,17 +15,20 @@ const minDeposit = 10;
 
 const port = process.env.PORT || "3003";
 const TOKEN = process.env.APP_MT;
-const TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
-const TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
-const contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+const uri = process.env.APP_URI;
+const pik = process.env.APP_PRYKEY;
+
+var TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
+var TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
+var contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
 const Testnet = process.env.APP_TESTNET || "false";
 
 if (Testnet === "true") {
 
-  const TRONGRID_API =  "https://api.nileex.io";
-  const TRONGRID_API_EVENT = "https://event.nileex.io";
-  const contractAddress = "TMZEUaFiGkLYjS7QJ1zKKKNu5hSu6Lno6t";
+  TRONGRID_API =  "https://api.nileex.io";
+  TRONGRID_API_EVENT = "https://event.nileex.io";
+  contractAddress = "TMZEUaFiGkLYjS7QJ1zKKKNu5hSu6Lno6t";
   
 }
 
@@ -33,7 +36,7 @@ var tronWeb = new TronWeb(
   TRONGRID_API,
   TRONGRID_API,
   TRONGRID_API_EVENT,
-  process.env.APP_PRYKEY
+  pik
 );
 
 const MasterWallet =  tronWeb.defaultAddress.base58;
@@ -58,7 +61,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const options = { useNewUrlParser: true, useUnifiedTopology: true };
 
-mongoose.connect(process.env.APP_URI, options)
+mongoose.connect(uri, options)
 .then(async() => { console.log("Conectado Exitodamente a la base de datos");})
 .catch(err => { console.log(err); });
 
@@ -126,8 +129,6 @@ async function asignarTRX(wallet){
   }
   
 }
-
-asignarTRX("TE7rWugFTYspciUYv2BWmpTQKLSymuMs4n")
 
 async function buscarWalletsDisponibles(){
 
