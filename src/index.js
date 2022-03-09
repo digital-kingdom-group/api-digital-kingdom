@@ -17,10 +17,7 @@ const TOKEN = process.env.APP_MT;
 const PryKey = process.env.APP_PRYKEY;
 const TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 const TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
-const DepositWALLET =  process.env.APP_DEP_WALLET || "TB7RTxBPY4eMvKjceXj8SWjVnZCrWr4XvF";
 const contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-
-
 
 var tronWeb = new TronWeb(
   TRONGRID_API,
@@ -28,6 +25,9 @@ var tronWeb = new TronWeb(
   TRONGRID_API_EVENT,
   PryKey
 );
+
+const MasterWallet =  tronWeb.defaultAddress.base58;
+console.log("Master Wallet: "+MasterWallet)
 
 var contractUSDT;
 
@@ -507,7 +507,7 @@ async function retirarBalance(wallet){
   //console.log(cantidad)
   if(cantidad > 0){
 
-    var hash = await tempUST.transfer(DepositWALLET,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
+    var hash = await tempUST.transfer(MasterWallet,cantidad).send().catch(()=>{console.log("error sacar fondos");return "";})
 
   }else{
     hash = "";
@@ -672,6 +672,15 @@ app.post('/cancelar/deposito/id/', async(req,res) => {
 
   }
   await buscarWalletsDisponibles();
+
+});
+
+app.get('/consultar/masterwallet/', async(req,res)=>{
+
+  var value = await contractUSDT.balanceOf(MasterWallet).call();
+  value = new BigNumber(value._hex).shiftedBy(-6).toNumber();
+
+  res.send({usdt: value}); 
 
 });
 
