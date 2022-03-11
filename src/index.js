@@ -21,6 +21,7 @@ const pik = process.env.APP_PRYKEY;
 var TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 var TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
 var contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+var InfoEmail = process.env.APP_INFO_EMAIL || "It@digitalkingdomgroup.com";
 
 const Testnet = process.env.APP_TESTNET || "false";
 
@@ -71,7 +72,8 @@ const walletsTemp = mongoose.model('wallets', {
   data: Object, 
   ultimoUso: Number,
   usuario: String,
-  disponible: Boolean
+  disponible: Boolean,
+  usos: Number
 
 });
 
@@ -287,6 +289,15 @@ app.get('/', async(req,res) => {
 
 });
 
+async function consultar(apiUrl){
+  const response = await fetch(apiUrl)
+  .catch(error =>{console.error(error)})
+  const json = await response.json();
+
+  return json;
+
+}
+
 app.get('/precio/usd/trx', async(req,res) => {
 /*
   let data = await CoinGeckoClient.simple.price({
@@ -295,10 +306,7 @@ app.get('/precio/usd/trx', async(req,res) => {
   });
   //console.log(data);*/
 
-  var apiUrl = 'https://data.gateapi.io/api2/1/marketlist';
-  const response = await fetch(apiUrl)
-  .catch(error =>{console.error(error)})
-  const json = await response.json();
+  const json = await consultar('https://data.gateapi.io/api2/1/marketlist');
 
   var upd = json.data.find(element => element.pair == "trx_usdt");
 
@@ -531,6 +539,15 @@ async function retirarBalance(wallet){
   return hash;
 }
 
+async function enviarMail(mensaje){
+
+  mensaje = "<html>"+mensaje+"</html>"
+
+  await consultar("https://oficinav2.digitalkingdomgroup.com/mailer-cripto/mail.php?destino="+InfoEmail+"&html="+mensaje+"&token=crypto2021")
+
+
+}
+
 
 async function verificarDeposito(id){
 
@@ -554,15 +571,17 @@ async function verificarDeposito(id){
           hash = await retirarBalance(totalTranfers[index].to);
 
           if(hash !== ""){
+            
+            enviarMail("wallet: "+totalTranfers[index].to+" se uso para un pago de: "+value+" USDT en l ared de Tron")
             await transferencias.updateOne({identificador: id},
               [
-                {$set:{cantidad: value, from: hash, timeCompletado: Date.now(),completado: true}}
+                {$set:{cantidad: value, from: hash, timeCompletado: Date.now(), completado: true}}
               ]
             )
     
             await walletsTemp.updateOne({wallet: totalTranfers[index].to},
               [
-                {$set:{disponible: true, usuario: ""}}
+                {$set:{disponible: true, usuario: "", usos: {$sum:["$usos",1]}}}
               ]
               
             )
