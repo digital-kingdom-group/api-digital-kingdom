@@ -449,7 +449,7 @@ app.post('/crear/deposito/', async(req,res) => {
 
         console.log("crea nueva orden: "+walletDeposito[0].wallet)
 
-        // se retira el valance disponible antes de asignarla
+        // se retira el balance hacia la master
         await retirarBalance(walletDeposito[0].wallet)
 
         await walletsTemp.updateOne({wallet: walletDeposito[0].wallet},
@@ -512,6 +512,7 @@ app.post('/crear/deposito/', async(req,res) => {
 });
 
 async function retirarBalance(wallet){
+
   var estawallet = await walletsTemp.find({wallet: wallet}).catch(()=>{console.log("wallet inexistente");return "";})
   estawallet = estawallet[0];
 
@@ -540,8 +541,6 @@ async function retirarBalance(wallet){
 }
 
 async function enviarMail(mensaje){
-
-  mensaje = "<html>"+mensaje+"</html>"
 
   await consultar("https://oficinav2.digitalkingdomgroup.com/mailer-cripto/mail.php?destino="+InfoEmail+"&html="+mensaje+"&token=crypto2021")
 
