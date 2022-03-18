@@ -11,9 +11,9 @@
   $message = $_GET['html'];
   if ("crypto2021" == $_GET['token']) {
       mail($to,$subject,$message, $headers);
-      echo "true";
+      echo "{result: true}";
   }else{
-      echo "false";
+      echo "{false: false}";
   }
     
 ?>
