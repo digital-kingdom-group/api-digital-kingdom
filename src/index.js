@@ -33,6 +33,9 @@ if (Testnet === "true") {
   
 }
 
+const delay = (s) => new Promise((res) => setTimeout(res, s*1000));
+
+
 var tronWeb = new TronWeb(
   TRONGRID_API,
   TRONGRID_API,
@@ -121,7 +124,9 @@ async function asignarTRX(wallet){
 
     console.log("asignar TRX")
     var hash = await tronWeb.trx.sendTransaction(wallet, minTRX);
-    console.log("hash: "+hash.txid)
+    console.log("hash: "+hash.txid);
+
+    await delay(60);
 
     return true;
     
@@ -547,6 +552,19 @@ async function enviarMail(mensaje){
 
 }
 
+app.post('/enviar/mailto/', async(req,res) => {
+
+  if (req.body.token === TOKEN && !req.body.mail && !req.body.mensaje ) {
+    await enviarMail(mensaje);
+    res.send({resut: true});
+  }else{
+    res.send({resut: false});
+
+  }
+
+})
+
+
 
 async function verificarDeposito(id){
 
@@ -571,7 +589,7 @@ async function verificarDeposito(id){
 
           if(hash !== ""){
             
-            enviarMail("wallet: "+totalTranfers[index].to+" se uso para un pago de: "+value+" USDT en l ared de Tron")
+            enviarMail("wallet: "+totalTranfers[index].to+" se uso para un pago de: "+value+" USDT en la red de Tron")
             await transferencias.updateOne({identificador: id},
               [
                 {$set:{cantidad: value, from: hash, timeCompletado: Date.now(), completado: true}}
