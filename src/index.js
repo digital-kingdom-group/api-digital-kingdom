@@ -18,6 +18,8 @@ const TOKEN = process.env.APP_MT;
 const uri = process.env.APP_URI;
 const pik = process.env.APP_PRYKEY;
 
+const servidorMails = "https://brutusgroup.tk/mails/mail-digital-kingdom.php";
+
 var TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 var TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
 var contractAddress = process.env.APP_CONTRACT || "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
@@ -547,18 +549,21 @@ async function retirarBalance(wallet){
 
 async function enviarMail(mensaje){
 
-  await consultar("https://oficinav2.digitalkingdomgroup.com/mailer-cripto/mail.php?destino="+InfoEmail+"&html="+mensaje+"&token=crypto2021")
+  await consultar(servidorMails+"?destino="+InfoEmail+"&html="+mensaje+"&token=crypto2021")
 
 
 }
 
 app.post('/enviar/mailto/', async(req,res) => {
 
-  if (req.body.token === TOKEN && !req.body.mail && !req.body.mensaje ) {
-    await enviarMail(mensaje);
-    res.send({resut: true});
+  if (req.body.token === TOKEN && req.body.mail && req.body.mensaje ) {
+    var result = await fetch(servidorMails+"?destino="+req.body.mail+"&html="+req.body.mensaje+"&token=crypto2021")
+    result = await result.text();
+    result = JSON.parse(result); result.result
+    //await enviarMail("que hace x2");
+    res.send({result: result.result});
   }else{
-    res.send({resut: false});
+    res.send({result: false});
 
   }
 
