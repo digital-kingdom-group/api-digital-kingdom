@@ -18,7 +18,7 @@ const TOKEN = process.env.APP_MT;
 const uri = process.env.APP_URI;
 const pik = process.env.APP_PRYKEY;
 
-const servidorMails = process.env.APP_SERVER_MAIL ||"https://brutusgroup.tk/mails/mail-digital-kingdom.php";
+const servidorMails = process.env.APP_SERVER_MAIL ||"https://oficinav2.digitalkingdomgroup.com/mailer-cripto/mail.php";
 
 var TRONGRID_API = process.env.APP_API || "https://api.trongrid.io";
 var TRONGRID_API_EVENT = process.env.APP_API_EVENT || "https://api.trongrid.io";
